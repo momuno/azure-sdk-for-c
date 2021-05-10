@@ -24,6 +24,7 @@
     - [IoT Hub Telemetry Sample](#iot-hub-telemetry-sample)
     - [IoT Hub SAS Telemetry Sample](#iot-hub-sas-telemetry-sample)
     - [IoT Hub Twin Sample](#iot-hub-twin-sample)
+    - [IoT Hub Twin CBOR Sample](#iot-hub-twin-cbor-sample)
     - [IoT Hub Plug and Play Sample](#iot-hub-plug-and-play-sample)
     - [IoT Hub Plug and Play Multiple Component Sample](#iot-hub-plug-and-play-multiple-component-sample)
     - [IoT Provisioning Certificate Sample](#iot-provisioning-certificate-sample)
@@ -175,6 +176,8 @@ To run the samples, ensure you have the following programs and tools installed o
       ```
         - When prompted to include the default subdirectory, enter `n` so to install in `/usr/local`.
 
+    <br/>
+
     Windows (PowerShell): Download the latest version of [CMake](https://cmake.org/download).
 
     - Use the Windows installer.
@@ -196,6 +199,43 @@ To run the samples, ensure you have the following programs and tools installed o
 - If running a Plug and Play sample: `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
   - Have the most recent version of [Azure IoT Explorer](https://github.com/Azure/azure-iot-explorer/releases) installed and connected to your Azure IoT Hub. More instructions on can be found [here](https://docs.microsoft.com/azure/iot-pnp/howto-use-iot-explorer).
 
+- If running a CBOR sample: `paho_iot_hub_twin_cbor_sample`
+  - Have the [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) intel/tinycbor library installed.
+    <details><summary><i>Instructions:</i></summary>
+    <p>
+
+    Linux:
+
+    ```bash
+    git clone https://github.com/intel/tinycbor.git
+    cd tinycbor
+    git checkout v0.5.3
+    make
+    sudo make install
+    ```
+
+    Windows:
+
+    1.  Open the appropriate Visual Studio command prompt and install intel/tinycbor.
+
+        - x86 system: Developer Command Prompt for Visual Studio.
+        - x64 system: x64 Native Tools Command Prompt for Visual Studio.
+
+        ```
+        git clone https://github.com/intel/tinycbor.git
+        cd tinycbor
+        git checkout v0.5.3
+        NMAKE /F Makefile.nmake
+        ```
+
+    2.  Open PowerShell and update the Path environment variable.
+
+        ```powershell
+        $env:Path="$env:Path;<FULL PATH to tinycbor>"
+        ```
+
+    </p>
+    </details>
 
 ## Getting Started
 
@@ -205,7 +245,10 @@ Next you must create and connect an authenticated device. You can authenticate i
 
 #### Create a Device Using X.509 Self-Signed Certificate Authentication
 
-This approach must be used for the following samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`, `paho_iot_hub_twin_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`, `paho_iot_provisioning_sample`
+This approach must be used for the following samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`,  `paho_iot_hub_twin_sample`, `paho_iot_hub_twin_cbor_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`, `paho_iot_provisioning_sample`
+
+<details><summary><i>Instructions to create a device using X.509 Self-Signed Certificate Authentication:</i></summary>
+<p>
 
 <details><summary><i>Instructions to create a device using X.509 Self-Signed Certificate Authentication:</i></summary>
 <p>
@@ -341,7 +384,7 @@ Set the following environment variables for all samples:
 
 #### IoT Hub X.509 Certificate Samples
 
-Set the following environment variables if running any of these samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`, `paho_iot_hub_twin_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
+Set the following environment variables if running any of these samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`, `paho_iot_hub_twin_sample`, `paho_iot_hub_twin_cbor_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
 
 <details><summary><i>Instructions to set environment variables for IoT Hub X.509 Certificate samples:</i></summary>
 <p>
@@ -586,6 +629,12 @@ This section provides an overview of the different samples available to run and 
 
   </p>
   </details>
+
+### IoT Hub Twin CBOR Sample
+
+- *Executable:* `paho_iot_hub_twin_cbor_sample`
+
+  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_twin_cbor_sample.c) is the same as the `paho_iot_hub_twin_sample` above, with the exception that the device uses CBOR encoding and decoding for the Twin Document instead of JSON. The service side still uses JSON. To run this sample, the MIT licensed [intel/tinycbor](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions.
 
 ### IoT Hub Plug and Play Sample
 
