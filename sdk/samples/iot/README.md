@@ -20,11 +20,11 @@
   - [Build and Run the Sample](#build-and-run-the-sample)
   - [Sample Descriptions](#sample-descriptions)
     - [IoT Hub C2D Sample](#iot-hub-c2d-sample)
+    - [IoT Hub CBOR Sample](#iot-hub-cbor-sample)
     - [IoT Hub Methods Sample](#iot-hub-methods-sample)
     - [IoT Hub Telemetry Sample](#iot-hub-telemetry-sample)
     - [IoT Hub SAS Telemetry Sample](#iot-hub-sas-telemetry-sample)
     - [IoT Hub Twin Sample](#iot-hub-twin-sample)
-    - [IoT Hub Twin CBOR Sample](#iot-hub-twin-cbor-sample)
     - [IoT Hub Plug and Play Sample](#iot-hub-plug-and-play-sample)
     - [IoT Hub Plug and Play Multiple Component Sample](#iot-hub-plug-and-play-multiple-component-sample)
     - [IoT Provisioning Certificate Sample](#iot-provisioning-certificate-sample)
@@ -199,7 +199,7 @@ To run the samples, ensure you have the following programs and tools installed o
 - If running a Plug and Play sample: `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
   - Have the most recent version of [Azure IoT Explorer](https://github.com/Azure/azure-iot-explorer/releases) installed and connected to your Azure IoT Hub. More instructions on can be found [here](https://docs.microsoft.com/azure/iot-pnp/howto-use-iot-explorer).
 
-- If running a CBOR sample: `paho_iot_hub_twin_cbor_sample`
+- If running a CBOR sample: `paho_iot_hub_cbor_c2d_telemetry_twin_sample`
   - Have the [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) intel/tinycbor library installed.
     <details><summary><i>Instructions:</i></summary>
     <p>
@@ -245,10 +245,7 @@ Next you must create and connect an authenticated device. You can authenticate i
 
 #### Create a Device Using X.509 Self-Signed Certificate Authentication
 
-This approach must be used for the following samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`,  `paho_iot_hub_twin_sample`, `paho_iot_hub_twin_cbor_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`, `paho_iot_provisioning_sample`
-
-<details><summary><i>Instructions to create a device using X.509 Self-Signed Certificate Authentication:</i></summary>
-<p>
+This approach must be used for the following samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_cbor_c2d_telemetry_twin_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`,  `paho_iot_hub_twin_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`, `paho_iot_provisioning_sample`
 
 <details><summary><i>Instructions to create a device using X.509 Self-Signed Certificate Authentication:</i></summary>
 <p>
@@ -384,7 +381,7 @@ Set the following environment variables for all samples:
 
 #### IoT Hub X.509 Certificate Samples
 
-Set the following environment variables if running any of these samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`, `paho_iot_hub_twin_sample`, `paho_iot_hub_twin_cbor_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
+Set the following environment variables if running any of these samples: `paho_iot_hub_c2d_sample`, `paho_iot_hub_cbor_c2d_telemetry_twin_sample`,  `paho_iot_hub_methods_sample`, `paho_iot_hub_telemetry_sample`, `paho_iot_hub_twin_sample`, `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
 
 <details><summary><i>Instructions to set environment variables for IoT Hub X.509 Certificate samples:</i></summary>
 <p>
@@ -570,6 +567,58 @@ This section provides an overview of the different samples available to run and 
   </p>
   </details>
 
+### IoT Hub CBOR Sample
+
+- *Executable:* `paho_iot_hub_cbor_c2d_telemetry_twin_sample`
+
+  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_cbor_c2d_telemetry_twin_sample.c) utilizes the Azure IoT Hub to get the device twin document, send a reported property message, and receive desired property messages all in CBOR. It also shows how to set an application-defined content type (such as CBOR) for either C2D or telemetry messaging, to be used with a coordinated service-side application. After 10 attempts to receive a message, the sample will exit. To run this sample, the MIT licensed [intel/tinycbor](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions. The Embedded C SDK is not dependent on ny particular CBOR library. X509 self-certification is used.
+
+  <details><summary><i>How to interact with the CBOR sample:</i></summary>
+  <p>
+
+    <details><summary><b>Device Twin:</b></summary>
+    <p>
+
+    A property named `device_count` is supported for this sample.
+
+    <b>To send a device twin desired property message:</b> Select your device's "Device Twin" tab in the Azure Portal of your IoT Hub. Add the property `device_count` along with a corresponding value to the `desired` section of the JSON. Select "Save" to update the twin document and send the twin message to the device. The IoT Hub will translate the twin JSON into CBOR for the device to consume.
+
+    ```json
+    "properties": {
+        "desired": {
+            "device_count": 42,
+        }
+    }
+    ```
+
+    No other property names sent in a desired property message are supported. If any are sent, the log will report the `device_count` property was not found.
+
+    </p>
+    </details>
+
+    <details><summary><b>Cloud-to-Device Messaging:</b></summary>
+    <p>
+
+    <b>To send a C2D message:</b> Select your device's "Message to Device" tab in the Azure Portal for your IoT Hub. Under "Properties", enter `$.ct` for "Key", and `cbor` for "Value". Enter a message in the "Message Body" and select "Send Message".
+
+    - <b>IMPORTANT:</b> This sample only demonstrates how to set the expected content type for a C2D message on the device side. Only device-side implementation is shown; the corresponding service-side required implementation to use this feature is not part of this sample. The Azure Portal service-side application does not support CBOR translation for C2D messages, therefore any correctly formatted JSON message sent from the portal will not arrive to the device as correct CBOR.
+
+    </p>
+    </details>
+
+    <details><summary><b>Telemetry:</b></summary>
+    <p>
+
+    After receiving a message (C2D or twin desired property) or upon a message timeout, the sample will send a single telemetry message in CBOR. After 10 attempts to receive a message, the sample will exit.
+
+    - <b>IMPORTANT:</b> This sample only demonstrates how to set the expected content type for a Telemetry message on the device side. Only device-side implementation is shown; the corresponding service-side required implementation to use this feature is not part of this sample.
+
+    </p>
+    </details>
+
+  </p>
+  </details>
+
 ### IoT Hub Methods Sample
 
 - *Executable:* `paho_iot_hub_methods_sample`
@@ -629,12 +678,6 @@ This section provides an overview of the different samples available to run and 
 
   </p>
   </details>
-
-### IoT Hub Twin CBOR Sample
-
-- *Executable:* `paho_iot_hub_twin_cbor_sample`
-
-  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_twin_cbor_sample.c) is the same as the `paho_iot_hub_twin_sample` above, with the exception that the device uses CBOR encoding and decoding for the Twin Document instead of JSON. The service side still uses JSON. To run this sample, the MIT licensed [intel/tinycbor](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions.
 
 ### IoT Hub Plug and Play Sample
 
