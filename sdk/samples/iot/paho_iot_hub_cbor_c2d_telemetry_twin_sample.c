@@ -257,6 +257,14 @@ static void subscribe_mqtt_client_to_iot_hub_topics(void)
         "Failed to subscribe to the Twin Response topic: MQTTClient return code %d.", rc);
     exit(rc);
   }
+
+  // Messages received on the C2D topic will be cloud-to-device messages.
+  int rc = MQTTClient_subscribe(mqtt_client, AZ_IOT_HUB_CLIENT_C2D_SUBSCRIBE_TOPIC, 1);
+  if (rc != MQTTCLIENT_SUCCESS)
+  {
+    IOT_SAMPLE_LOG_ERROR("Failed to subscribe to the C2D topic: MQTTClient return code %d.", rc);
+    exit(rc);
+  }
 }
 
 static void send_and_receive_messages(void)
