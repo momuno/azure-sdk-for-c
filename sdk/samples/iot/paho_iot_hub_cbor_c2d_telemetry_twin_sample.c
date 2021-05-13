@@ -40,8 +40,17 @@
 #define MQTT_TIMEOUT_RECEIVE_MS (60 * 1000)
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
-#define CONTENT_TYPE_C2D "cbor" // application-defined
-#define CONTENT_TYPE_TELEMETRY "cbor" // application-defined
+/**
+ * The content type system property for C2D and/or telemetry messages will appear as a key-value
+ * pair appended to the topic. They key is SDK defined as `$.ct`, and URL encoded as `%24.ct`. The
+ * value is application-defined and must be agreed upon between the device and service side
+ * applications. Examples for this value include `text%2Fplain` and `application%2Fjson`. To
+ * demonstrate setting the content type system property, this sample uses `application%2Fcbor`.
+ *
+ * See az_iot_common.h for more system properties available to set for C2D and telemetry messaging.
+ */
+#define CONTENT_TYPE_C2D "application%2Fcbor" // application-defined
+#define CONTENT_TYPE_TELEMETRY "application%2Fcbor" // application-defined
 
 static az_span const twin_get_rid_base = AZ_SPAN_LITERAL_FROM_STR("tg-");
 static uint64_t twin_get_rid_num = 0;
@@ -88,11 +97,13 @@ static void build_telemetry(
 
 /*
  * This sample utilizes the Azure IoT Hub to get the device twin document, send a reported
- * property message, and receive desired property messages all in CBOR. It also shows how to set an
- * application-defined content type (such as CBOR) for either C2D or telemetry messaging, to be used
- * with a coordinated service-side application. After 10 attempts to receive a message, the sample
- * will exit. To run this sample, the MIT licensed intel/tinycbor library must be installed. The
- * Embedded C SDK is not dependent on ny particular CBOR library. X509 self-certification is used.
+ * property message, and receive desired property messages all in CBOR. It also shows how to set the
+ * content type system property for C2D and telemetry messaging. This property value is
+ * application-defined and must be agreed upon between the device and service side applications.
+ *
+ * After 10 attempts to receive a message, the sample will exit. To run this sample, the MIT
+ * licensed intel/tinycbor library must be installed. The Embedded C SDK is not dependent on any
+ * particular CBOR library. X509 self-certification is used.
  *
  * Device Twin:
  * A property named `device_count` is used. To send a device twin desired property message, select
