@@ -36,7 +36,7 @@ enum
 };
 
 /**
- * @brief Azure IoT Hub Client twin_content_type option values.
+ * @brief Azure IoT Hub Client `twin_content_type` option values.
  *
  */
 typedef enum
@@ -68,9 +68,9 @@ typedef struct
   az_span model_id;
 
   /**
-   * The `twin_content_type` determines the format to send in the username, which will inform IoT
-   * Hub what format the device expects the twin document to use. If this option is not set, the
-   * default is JSON.
+   * The `twin_content_type` determines the format to send in the username field properties, which
+   * will inform the IoT Hub what format the device expects the twin document to use. If this option
+   * is not set, the default is JSON.
    */
   az_iot_hub_client_option_twin_content_type twin_content_type;
 
