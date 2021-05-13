@@ -136,8 +136,7 @@ static void create_and_configure_mqtt_client(void)
   az_iot_hub_client_options options = az_iot_hub_client_options_default();
 
   // Set the content type to CBOR for Direct Method payloads and Twin Document.
-  options.method_twin_content_type
-      = AZ_SPAN_FROM_STR(AZ_IOT_HUB_CLIENT_OPTION_METHOD_TWIN_CONTENT_TYPE_CBOR);
+  options.twin_content_type = AZ_IOT_HUB_CLIENT_OPTION_TWIN_CONTENT_TYPE_CBOR;
 
   rc = az_iot_hub_client_init(&hub_client, env_vars.hub_hostname, env_vars.hub_device_id, &options);
   if (az_result_failed(rc))
