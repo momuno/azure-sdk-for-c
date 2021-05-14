@@ -199,8 +199,8 @@ To run the samples, ensure you have the following programs and tools installed o
 - If running a Plug and Play sample: `paho_iot_hub_pnp_sample`, `paho_iot_hub_pnp_component_sample`
   - Have the most recent version of [Azure IoT Explorer](https://github.com/Azure/azure-iot-explorer/releases) installed and connected to your Azure IoT Hub. More instructions on can be found [here](https://docs.microsoft.com/azure/iot-pnp/howto-use-iot-explorer).
 
-- If running a CBOR sample: `paho_iot_hub_cbor_c2d_telemetry_twin_sample`
-  - Have the [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) intel/tinycbor library installed.
+- If running a CBOR sample: `paho_iot_hub_twin_cbor_sample`
+  - Have Intel's [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) TinyCBOR library installed.
     <details><summary><i>Instructions:</i></summary>
     <p>
 
@@ -216,7 +216,7 @@ To run the samples, ensure you have the following programs and tools installed o
 
     Windows:
 
-    1.  Open the appropriate Visual Studio command prompt and install intel/tinycbor.
+    1.  Open the appropriate Visual Studio command prompt and install Intel's TinyCBOR.
 
         - x86 system: Developer Command Prompt for Visual Studio.
         - x64 system: x64 Native Tools Command Prompt for Visual Studio.
@@ -571,7 +571,7 @@ This section provides an overview of the different samples available to run and 
 
 - *Executable:* `paho_iot_hub_cbor_c2d_telemetry_twin_sample`
 
-  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_cbor_c2d_telemetry_twin_sample.c) utilizes the Azure IoT Hub to get the device twin document, send a reported property message, and receive desired property messages all in CBOR. It also shows how to set an application-defined content type (such as CBOR) for either C2D or telemetry messaging, to be used with a coordinated service-side application. After 10 attempts to receive a message, the sample will exit. To run this sample, the MIT licensed [intel/tinycbor](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions. The Embedded C SDK is not dependent on ny particular CBOR library. X509 self-certification is used.
+  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_cbor_c2d_telemetry_twin_sample.c) utilizes the Azure IoT Hub to get the device twin document, send a reported property message, and receive desired property messages all in CBOR. It also shows how to set an application-defined content type (such as CBOR) for either C2D or telemetry messaging, to be used with a coordinated service-side application. After 10 attempts to receive a message, the sample will exit. To run this sample, Intel's MIT licensed [TinyCBOR](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions. The Embedded C SDK is not dependent on ny particular CBOR library. X509 self-certification is used.
 
   <details><summary><i>How to interact with the CBOR sample:</i></summary>
   <p>
