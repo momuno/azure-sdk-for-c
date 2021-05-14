@@ -102,7 +102,7 @@ static void build_cbor_telemetry(
  * This sample utilizes the Azure IoT Hub to get the device twin document, send a reported
  * property message, and receive desired property messages all in CBOR data format. It also shows
  * how to set the content type system property for C2D and telemetry messaging. After 10 attempts to
- * receive a C2D of desired property message, the sample will exit.
+ * receive a C2D or desired property message, the sample will exit.
  *
  * To run this sample, Intel's MIT licensed TinyCBOR library must be installed. The Embedded C SDK
  * is not dependent on any particular CBOR library. X509 self-certification is used.
