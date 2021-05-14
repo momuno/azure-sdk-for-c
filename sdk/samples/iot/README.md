@@ -200,7 +200,7 @@ To run the samples, ensure you have the following programs and tools installed o
   - Have the most recent version of [Azure IoT Explorer](https://github.com/Azure/azure-iot-explorer/releases) installed and connected to your Azure IoT Hub. More instructions on can be found [here](https://docs.microsoft.com/azure/iot-pnp/howto-use-iot-explorer).
 
 - If running a CBOR sample: `paho_iot_hub_twin_cbor_sample`
-  - Have the [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) TinyCBOR library installed.
+  - Have Intel's [MIT licensed](https://github.com/intel/tinycbor/blob/master/LICENSE) TinyCBOR library installed.
     <details><summary><i>Instructions:</i></summary>
     <p>
 
@@ -634,7 +634,7 @@ This section provides an overview of the different samples available to run and 
 
 - *Executable:* `paho_iot_hub_twin_cbor_sample`
 
-  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_twin_cbor_sample.c) is the same as the `paho_iot_hub_twin_sample` above, with the exception that the device uses CBOR encoding and decoding for the Twin Document instead of JSON. The service side still uses JSON. To run this sample, the MIT licensed [TinyCBOR](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions.
+  This [sample](https://github.com/Azure/azure-sdk-for-c/blob/master/sdk/samples/iot/paho_iot_hub_twin_cbor_sample.c) is the same as the `paho_iot_hub_twin_sample` above, with the exception that the device uses CBOR encoding and decoding for the Twin Document instead of JSON. The service side still uses JSON. To run this sample, Intel's MIT licensed [TinyCBOR](https://github.com/intel/tinycbor) library must be installed. Please see the [prerequisites](#prerequisites) section for instructions.
 
 ### IoT Hub Plug and Play Sample
 
