@@ -139,8 +139,8 @@ static void build_cbor_telemetry(
  * CBOR (or other specified content type) and the device application to correctly decode it.
  *
  * Telemetry:
- * The sample will automatically send CBOR formatted messages after each received message or after a
- * message timeout. The SDK-defined content type system property name `$.ct` and the
+ * The sample will automatically send CBOR formatted messages after each attempt to receive a C2D or
+ * desired property message. The SDK-defined content type system property name `$.ct` and the
  * application-defined value `application/cbor` will appear as a URL-encoded key-value pair appended
  * to the topic: `%24.ct=application%2Fcbor`. This value must be agreed upon between the device and
  * service side applications to use the content type system property for Telemetry messaging.
