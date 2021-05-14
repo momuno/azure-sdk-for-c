@@ -25,7 +25,7 @@
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
-// warning within intel/tinycbor: conversion from 'int' to uint8_t'
+// warning within TinyCBOR library: conversion from 'int' to uint8_t'
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 #include "cbor.h"
@@ -104,7 +104,7 @@ static void build_cbor_telemetry(
  * how to set the content type system property for C2D and telemetry messaging. After 10 attempts to
  * receive a C2D of desired property message, the sample will exit.
  *
- * To run this sample, the MIT licensed intel/tinycbor library must be installed. The Embedded C SDK
+ * To run this sample, Intel's MIT licensed TinyCBOR library must be installed. The Embedded C SDK
  * is not dependent on any particular CBOR library. X509 self-certification is used.
  *
  * Device Twin:
@@ -129,21 +129,21 @@ static void build_cbor_telemetry(
  * To send a C2D message, select your device's Message to Device tab in the Azure Portal for your
  * IoT Hub. Under Properties, enter the SDK-defined content type system property name `$.ct` for
  * Key, and the application-defined value `application/cbor` for Value. This value must be agreed
- * upon between the device and service side applications for the feature to work. Enter a message in
- * the Message Body and select Send Message. The Key and Value will appear as a URL-encoded
- * key-value pair appended to the topic: `%24.ct=application%2Fcbor`.
+ * upon between the device and service side applications to use the content type system property for
+ * C2D messaging. Enter a message in the Message Body and select Send Message. The Key and Value
+ * will appear as a URL-encoded key-value pair appended to the topic: `%24.ct=application%2Fcbor`.
  *
  * NOTE: The Azure Portal will NOT translate a JSON formatted message into CBOR, nor will it encode
  * the message in binary. Therefore, this sample only demonstrates how to parse the topic for the
- * content type system property. It is up to the service application to encode and send correctly
- * formatted CBOR and the device application to correctly decode it.
+ * content type system property. It is up to the service application to encode correctly formatted
+ * CBOR (or other specified content type) and the device application to correctly decode it.
  *
  * Telemetry:
  * The sample will automatically send CBOR formatted messages after each received message or after a
  * message timeout. The SDK-defined content type system property name `$.ct` and the
- * application-defined value will appear as a URL-encoded key-value pair appended to the topic for
- * a service-side application to consume: `%24.ct=application%2Fcbor`. This value must be agreed
- * upon between the device and service side applications for the feature to work.
+ * application-defined value `application/cbor` will appear as a URL-encoded key-value pair appended
+ * to the topic: `%24.ct=application%2Fcbor`. This value must be agreed upon between the device and
+ * service side applications to use the content type system property for Telemetry messaging.
  */
 int main(void)
 {
@@ -606,7 +606,9 @@ static void handle_c2d_message(az_span message_span, az_iot_hub_client_c2d_reque
   {
     IOT_SAMPLE_LOG_SUCCESS(
         "Client received expected system property content type value: %s.", CONTENT_TYPE_C2D);
-    // The application should parse or decode the message as the expected content type.
+    // The application should parse the message as the expected content type.
+    // This sample does not parse the message as CBOR because the Azure Portal does not translate
+    // JSON formatted messages into CBOR, nor does it encode messages in binary.
   }
   else
   {
