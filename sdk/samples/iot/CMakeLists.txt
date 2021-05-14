@@ -137,11 +137,7 @@ target_link_libraries(paho_iot_hub_twin_sample
 
 create_map_file(paho_iot_hub_twin_sample paho_iot_hub_twin_sample.map)
 
-<<<<<<< HEAD
-# CBOR Sample - Only compile if intel/tinycbor has been found
-=======
 # Twin CBOR Sample - Only compile if tinycbor has been found
->>>>>>> feature/iot_cbor
 find_library(tinycbor tinycbor
   if(WIN32)
     PATH_SUFFIXES tinycbor/lib lib
