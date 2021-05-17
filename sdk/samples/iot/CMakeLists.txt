@@ -55,6 +55,49 @@ target_link_libraries(paho_iot_hub_c2d_sample
 
 create_map_file(paho_iot_hub_c2d_sample paho_iot_hub_c2d_sample.map)
 
+# CBOR Sample - Only compile if tinycbor has been found
+find_library(tinycbor tinycbor
+  if(WIN32)
+    PATH_SUFFIXES tinycbor/lib lib
+  endif()
+)
+
+if (${tinycbor} STREQUAL "tinycbor-NOTFOUND")
+  message("-- Could NOT find tinycbor. Not compiling paho_iot_hub_cbor_c2d_telemetry_twin_sample")
+else()
+  if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib")
+  endif()
+
+  add_executable (paho_iot_hub_cbor_c2d_telemetry_twin_sample
+    ${CMAKE_CURRENT_LIST_DIR}/paho_iot_hub_cbor_c2d_telemetry_twin_sample.c
+  )
+
+  target_link_libraries(paho_iot_hub_cbor_c2d_telemetry_twin_sample
+    PRIVATE
+      az::iot::sample::common
+  )
+
+  target_link_libraries(paho_iot_hub_cbor_c2d_telemetry_twin_sample
+    PRIVATE
+      ${tinycbor} #Required to be a string for Windows
+  )
+
+  find_path(TINYCBOR_INCLUDE_DIR cbor.h
+    PATH_SUFFIXES
+      if(WIN32) tinycbor/src src
+      elseif(UNIX) tinycbor #/usr/local/include/tinycbor
+      endif()
+  )
+  target_include_directories(paho_iot_hub_cbor_c2d_telemetry_twin_sample
+    PRIVATE
+      ${TINYCBOR_INCLUDE_DIR}
+  )
+
+  create_map_file(paho_iot_hub_cbor_c2d_telemetry_twin_sample paho_iot_hub_cbor_c2d_telemetry_twin_sample.map)
+endif()
+
 # Methods Sample
 add_executable (paho_iot_hub_methods_sample
   ${CMAKE_CURRENT_LIST_DIR}/paho_iot_hub_methods_sample.c
@@ -136,49 +179,6 @@ target_link_libraries(paho_iot_hub_twin_sample
 )
 
 create_map_file(paho_iot_hub_twin_sample paho_iot_hub_twin_sample.map)
-
-# Twin CBOR Sample - Only compile if tinycbor has been found
-find_library(tinycbor tinycbor
-  if(WIN32)
-    PATH_SUFFIXES tinycbor/lib lib
-  endif()
-)
-
-if (${tinycbor} STREQUAL "tinycbor-NOTFOUND")
-  message("-- Could NOT find tinycbor. Not compiling paho_iot_hub_cbor_c2d_telemetry_twin_sample")
-else()
-  if(MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib")
-  endif()
-
-  add_executable (paho_iot_hub_cbor_c2d_telemetry_twin_sample
-    ${CMAKE_CURRENT_LIST_DIR}/paho_iot_hub_cbor_c2d_telemetry_twin_sample.c
-  )
-
-  target_link_libraries(paho_iot_hub_cbor_c2d_telemetry_twin_sample
-    PRIVATE
-      az::iot::sample::common
-  )
-
-  target_link_libraries(paho_iot_hub_cbor_c2d_telemetry_twin_sample
-    PRIVATE
-      ${tinycbor} #Required to be a string for Windows
-  )
-
-  find_path(TINYCBOR_INCLUDE_DIR cbor.h
-    PATH_SUFFIXES
-      if(WIN32) tinycbor/src src
-      elseif(UNIX) tinycbor #/usr/local/include/tinycbor
-      endif()
-  )
-  target_include_directories(paho_iot_hub_cbor_c2d_telemetry_twin_sample
-    PRIVATE
-      ${TINYCBOR_INCLUDE_DIR}
-  )
-
-  create_map_file(paho_iot_hub_cbor_c2d_telemetry_twin_sample paho_iot_hub_cbor_c2d_telemetry_twin_sample.map)
-endif()
 
 # Provisioning (Certificates) Sample
 add_executable (paho_iot_provisioning_sample
