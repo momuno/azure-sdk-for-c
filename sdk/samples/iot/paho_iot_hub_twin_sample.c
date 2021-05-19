@@ -29,11 +29,14 @@
 #define MQTT_TIMEOUT_RECEIVE_MS (60 * 1000)
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
-static az_span const twin_document_topic_request_id = AZ_SPAN_LITERAL_FROM_STR("get_twin");
-static az_span const twin_patch_topic_request_id = AZ_SPAN_LITERAL_FROM_STR("reported_prop");
-static az_span const version_name = AZ_SPAN_LITERAL_FROM_STR("$version");
-static az_span const desired_device_count_property_name = AZ_SPAN_LITERAL_FROM_STR("device_count");
-static int32_t device_count_value = 0;
+static az_span const twin_get_rid_base = AZ_SPAN_LITERAL_FROM_STR("tg-");
+static uint64_t twin_get_rid_num = 0;
+static az_span const reported_property_rid_base = AZ_SPAN_LITERAL_FROM_STR("rp-");
+static uint64_t reported_property_rid_num = 0;
+
+static az_span const twin_version_name = AZ_SPAN_LITERAL_FROM_STR("$version");
+static az_span const twin_property_device_count_name = AZ_SPAN_LITERAL_FROM_STR("device_count");
+static int64_t twin_property_device_count_value = 0;
 
 static iot_sample_environment_variables env_vars;
 static az_iot_hub_client hub_client;
@@ -47,6 +50,7 @@ static void subscribe_mqtt_client_to_iot_hub_topics(void);
 static void send_and_receive_device_twin_messages(void);
 static void disconnect_mqtt_client_from_iot_hub(void);
 
+static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span);
 static void get_device_twin_document(void);
 static void send_reported_property(void);
 static bool receive_device_twin_message(void);
@@ -249,17 +253,49 @@ static void disconnect_mqtt_client_from_iot_hub(void)
   MQTTClient_destroy(&mqtt_client);
 }
 
+static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span)
+{
+  az_result rc;
+  az_span remainder;
+
+  if (az_span_size(*out_rid_span) < az_span_size(base_span) || az_span_size(base_span) < 0)
+  {
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed to generate_rid_span: az_result return code 0x%08x.", AZ_ERROR_NOT_ENOUGH_SPACE);
+    exit(AZ_ERROR_NOT_ENOUGH_SPACE);
+  }
+
+  remainder = az_span_copy(*out_rid_span, base_span);
+
+  rc = az_span_u64toa(remainder, unique_id, &remainder); // Performs size check internally.
+  if (az_result_failed(rc))
+  {
+    IOT_SAMPLE_LOG_ERROR("Failed to convert uint64_t to ASCII: az_result return code 0x%08x.", rc);
+    exit(rc);
+  }
+
+  *out_rid_span = az_span_create(
+      az_span_ptr(*out_rid_span), az_span_size(*out_rid_span) - az_span_size(remainder));
+}
+
 static void get_device_twin_document(void)
 {
   int rc;
 
   IOT_SAMPLE_LOG("Client requesting device twin document from service.");
 
+  // Generate the unique rid for request.
+  uint8_t twin_get_rid_buffer[64];
+  az_span twin_get_rid_span
+      = az_span_create(twin_get_rid_buffer, (int32_t)sizeof(twin_get_rid_buffer));
+  generate_rid_span(twin_get_rid_base, twin_get_rid_num, &twin_get_rid_span);
+  ++twin_get_rid_num; // Increment to keep uniqueness.
+
   // Get the Twin Document topic to publish the twin document request.
   char twin_document_topic_buffer[128];
   rc = az_iot_hub_client_twin_document_get_publish_topic(
       &hub_client,
-      twin_document_topic_request_id,
+      twin_get_rid_span,
       twin_document_topic_buffer,
       sizeof(twin_document_topic_buffer),
       NULL);
@@ -287,11 +323,19 @@ static void send_reported_property(void)
 
   IOT_SAMPLE_LOG("Client sending reported property to service.");
 
+  // Generate the unique rid for request.
+  uint8_t reported_property_rid_buffer[RID_BUFFER_SIZE];
+  az_span reported_property_rid_span
+      = az_span_create(reported_property_rid_buffer, (int32_t)sizeof(reported_property_rid_buffer));
+  generate_rid_span(
+      reported_property_rid_base, reported_property_rid_num, &reported_property_rid_span);
+  ++reported_property_rid_num; // Increment to keep uniqueness.
+
   // Get the Twin Patch topic to publish a reported property update.
   char twin_patch_topic_buffer[128];
   rc = az_iot_hub_client_twin_patch_get_publish_topic(
       &hub_client,
-      twin_patch_topic_request_id,
+      reported_property_rid_span,
       twin_patch_topic_buffer,
       sizeof(twin_patch_topic_buffer),
       NULL);
