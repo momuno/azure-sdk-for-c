@@ -585,6 +585,7 @@ static void handle_message(char* topic, int topic_len, MQTTClient_message const*
 
 static void handle_c2d_message(az_span message_span, az_iot_hub_client_c2d_request* c2d_request)
 {
+  (void)message_span;
   az_span content_type_span;
 
   az_result rc = az_iot_message_properties_find(
@@ -606,9 +607,7 @@ static void handle_c2d_message(az_span message_span, az_iot_hub_client_c2d_reque
   {
     IOT_SAMPLE_LOG_SUCCESS(
         "Client received expected system property content type value: %s.", CONTENT_TYPE_C2D);
-    // The application should parse the message as the expected content type.
-    // This sample does not parse the message as CBOR because the Azure Portal does not translate
-    // JSON formatted messages into CBOR, nor does it encode messages in binary.
+    // The application should parse the message_span as the expected content type.
   }
   else
   {
@@ -746,14 +745,14 @@ static void build_cbor_reported_property(
       &encoder_map, twin_property_device_count_name, strlen(twin_property_device_count_name));
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode text string: CborError %d.", rc);
+    IOT_SAMPLE_LOG_ERROR("Failed to encode text string '%s': CborError %d.", twin_property_device_count_name, rc);
     exit(rc);
   }
 
   rc = cbor_encode_int(&encoder_map, twin_property_device_count_value);
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode int: CborError %d.", rc);
+    IOT_SAMPLE_LOG_ERROR("Failed to encode int '%ld': CborError %d.", twin_property_device_count_value, rc);
     exit(rc);
   }
 
@@ -791,14 +790,14 @@ static void build_cbor_telemetry(
       &encoder_map, telemetry_message_property_name, strlen(telemetry_message_property_name));
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode text string: CborError %d.", rc);
+    IOT_SAMPLE_LOG_ERROR("Failed to encode text string '%s': CborError %d.", telemetry_message_property_name, rc);
     exit(rc);
   }
 
   rc = cbor_encode_int(&encoder_map, telemetry_message_property_value);
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode int: CborError %d.", rc);
+    IOT_SAMPLE_LOG_ERROR("Failed to encode int '%ld': CborError %d.", telemetry_message_property_value, rc);
     exit(rc);
   }
 
