@@ -52,7 +52,7 @@
     (void)printf("\n");                                                                          \
   } while (0)
 
-#define IOT_SAMPLE_LOG_HEX(span_description, byte_array, length) \
+#define IOT_SAMPLE_LOG_HEX(span_description, length, byte_array) \
   do                                                             \
   {                                                              \
     (void)printf("\t\t%s ", span_description);                   \
@@ -159,6 +159,7 @@ typedef enum
 typedef enum
 {
   PAHO_IOT_HUB_C2D_SAMPLE,
+  PAHO_IOT_HUB_CBOR_C2D_TELEMETRY_TWIN_SAMPLE,
   PAHO_IOT_HUB_METHODS_SAMPLE,
   PAHO_IOT_HUB_PNP_COMPONENT_SAMPLE,
   PAHO_IOT_HUB_PNP_SAMPLE,
