@@ -738,7 +738,7 @@ static bool update_property_device_count(int64_t new_device_count)
   else
   {
     IOT_SAMPLE_LOG_SUCCESS(
-        "Client twin updated not required. `%s` locally remains %ld.",
+        "Client twin update not required. `%s` locally remains %ld.",
         twin_property_device_count_name,
         twin_property_device_count_value);
     result = false;
