@@ -638,7 +638,7 @@ static void handle_device_twin_message(
         if (update_property_device_count(desired_property_device_count))
         {
           send_reported_property();
-          (void)receive_message();
+          receive_message();
         }
       }
       break;
