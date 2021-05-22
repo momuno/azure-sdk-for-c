@@ -41,7 +41,7 @@
 #define USERNAME_BUFFER_SIZE 256
 
 #define MAX_MESSAGE_COUNT 10
-#define MQTT_TIMEOUT_RECEIVE_MS (60 * 1000)
+#define MQTT_TIMEOUT_RECEIVE_MS (30 * 1000)
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
 /**
@@ -63,8 +63,8 @@ static uint64_t reported_property_rid_num = 0;
 static char* const twin_desired_name = "desired";
 static char* const twin_property_device_count_name = "device_count";
 static int64_t twin_property_device_count_value = 0;
-static char* const telemetry_message_property_name = "telemetry_message_iteration";
-static int64_t telemetry_message_property_value = 0;
+static char* const telemetry_property_message_iteration_name = "telemetry_message_iteration";
+static int64_t telemetry_property_message_iteration_value = 0;
 
 static iot_sample_environment_variables env_vars;
 static az_iot_hub_client hub_client;
@@ -134,10 +134,11 @@ static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* ou
  * C2D messaging. Enter a message in the Message Body and select Send Message. The Key and Value
  * will appear as a URL-encoded key-value pair appended to the topic: `%24.ct=application%2Fcbor`.
  *
- * NOTE: The Azure Portal will NOT translate a JSON formatted message into CBOR, nor will it encode
- * the message in binary. Therefore, this sample only demonstrates how to parse the topic for the
- * content type system property. It is up to the service application to encode correctly formatted
- * CBOR (or other specified content type) and the device application to correctly decode it.
+ * NOTE: The Azure Portal only recongnizes printable character input and will NOT translate a JSON
+ * formatted message into CBOR. Therefore, this sample only demonstrates how to parse the topic for
+ * the content type system property. It is up to the service application to encode correctly
+ * formatted CBOR (or other specified content type) and the device application to correctly decode
+ * it.
  *
  * Telemetry:
  * The sample will automatically send CBOR formatted messages after each attempt to receive a C2D or
@@ -297,7 +298,9 @@ static void send_and_receive_messages(void)
   send_reported_property();
   receive_message();
 
-  // Wait for desired property PATCH messages or C2D messages.
+  send_telemetry();
+
+  // Wait for desired property PATCH messages or C2D messages. Send Telemetry.
   for (uint8_t message_count = 0; message_count < MAX_MESSAGE_COUNT; message_count++)
   {
     receive_message();
@@ -574,24 +577,25 @@ static void handle_c2d_message(az_span message_span, az_iot_hub_client_c2d_reque
   if (az_result_failed(rc))
   {
     IOT_SAMPLE_LOG_ERROR(
-        "Sytem property name `%s` could not be found in topic: az_result_return code 0x%08x.",
-        AZ_IOT_MESSAGE_PROPERTIES_CONTENT_TYPE,
-        rc);
-    exit(rc);
-  }
-
-  // The content type system property value is application-defined and must reflect how the service
-  // application has chosen to define it.
-  if (az_span_is_content_equal(content_type_span, AZ_SPAN_FROM_STR(CONTENT_TYPE_C2D)))
-  {
-    IOT_SAMPLE_LOG_SUCCESS(
-        "Client received expected system property content type value: %s.", CONTENT_TYPE_C2D);
-    // The application should parse the message_span as the expected content type.
+        "Sytem property name `%s` could not be found in topic.",
+        AZ_IOT_MESSAGE_PROPERTIES_CONTENT_TYPE);
   }
   else
   {
-    IOT_SAMPLE_LOG_ERROR(
-        "Client did not receive expected system property content type value: %s.", CONTENT_TYPE_C2D);
+    // The content type system property value is application-defined and must reflect how the
+    // service application has chosen to define it.
+    if (az_span_is_content_equal(content_type_span, AZ_SPAN_FROM_STR(CONTENT_TYPE_C2D)))
+    {
+      IOT_SAMPLE_LOG_SUCCESS(
+          "Client received expected system property content type value: %s.", CONTENT_TYPE_C2D);
+      // The application should parse the message_span as the expected content type.
+    }
+    else
+    {
+      IOT_SAMPLE_LOG_ERROR(
+          "Client did not receive expected system property content type value: %s.",
+          CONTENT_TYPE_C2D);
+    }
   }
 }
 
@@ -611,11 +615,16 @@ static void handle_device_twin_message(
 
       if (twin_response->status == AZ_IOT_STATUS_OK)
       {
-        // Parse for the `device_count` property.
+        // Parse for the `device_count` property and if parsed, update locally.
         if (parse_cbor_desired_property(message_span, &desired_property_device_count))
         {
-          // If the `device_count` property differs from device, update locally.
-          (void)update_property_device_count(desired_property_device_count);
+          int64_t temp_value = twin_property_device_count_value;
+          twin_property_device_count_value = desired_property_device_count;
+          IOT_SAMPLE_LOG_SUCCESS(
+              "Client twin updated `%s` locally from %ld to %ld.",
+              twin_property_device_count_name,
+              temp_value,
+              twin_property_device_count_value);
         }
       }
       break;
@@ -669,8 +678,7 @@ static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parse
   rc = cbor_value_map_find_value(&root, twin_desired_name, &desired_root);
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR(
-        "Error when searching for %s: CborError %d.", twin_desired_name, rc);
+    IOT_SAMPLE_LOG_ERROR("Error when searching for %s: CborError %d.", twin_desired_name, rc);
     exit(rc);
   }
   if (cbor_value_is_valid(&desired_root))
@@ -694,13 +702,17 @@ static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parse
       if (rc)
       {
         IOT_SAMPLE_LOG_ERROR(
-            "Failed to get int64 value of property %s: CborError %d.", twin_property_device_count_name, rc);
+            "Failed to get int64 value of property %s: CborError %d.",
+            twin_property_device_count_name,
+            rc);
         exit(rc);
       }
       else
       {
         IOT_SAMPLE_LOG(
-            "Parsed desired property `%s`: %ld", twin_property_device_count_name, *out_parsed_device_count);
+            "Parsed desired property `%s`: %ld",
+            twin_property_device_count_name,
+            *out_parsed_device_count);
         result = true;
       }
     }
@@ -713,7 +725,8 @@ static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parse
   else
   {
     IOT_SAMPLE_LOG(
-        "`%s` property name was not found in desired property message.", twin_property_device_count_name);
+        "`%s` property name was not found in desired property message.",
+        twin_property_device_count_name);
     result = false;
   }
 
@@ -770,14 +783,16 @@ static void build_cbor_reported_property(
       &encoder_map, twin_property_device_count_name, strlen(twin_property_device_count_name));
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode text string '%s': CborError %d.", twin_property_device_count_name, rc);
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed to encode text string '%s': CborError %d.", twin_property_device_count_name, rc);
     exit(rc);
   }
 
   rc = cbor_encode_int(&encoder_map, twin_property_device_count_value);
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode int '%ld': CborError %d.", twin_property_device_count_value, rc);
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed to encode int '%ld': CborError %d.", twin_property_device_count_value, rc);
     exit(rc);
   }
 
@@ -812,17 +827,25 @@ static void build_cbor_telemetry(
   }
 
   rc = cbor_encode_text_string(
-      &encoder_map, telemetry_message_property_name, strlen(telemetry_message_property_name));
+      &encoder_map,
+      telemetry_property_message_iteration_name,
+      strlen(telemetry_property_message_iteration_name));
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode text string '%s': CborError %d.", telemetry_message_property_name, rc);
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed to encode text string '%s': CborError %d.",
+        telemetry_property_message_iteration_name,
+        rc);
     exit(rc);
   }
 
-  rc = cbor_encode_int(&encoder_map, telemetry_message_property_value);
+  rc = cbor_encode_int(&encoder_map, telemetry_property_message_iteration_value);
   if (rc)
   {
-    IOT_SAMPLE_LOG_ERROR("Failed to encode int '%ld': CborError %d.", telemetry_message_property_value, rc);
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed to encode int '%ld': CborError %d.",
+        telemetry_property_message_iteration_value,
+        rc);
     exit(rc);
   }
 
@@ -835,7 +858,7 @@ static void build_cbor_telemetry(
 
   *out_telemetry_payload_length = cbor_encoder_get_buffer_size(&encoder, telemetry_payload);
 
-  ++telemetry_message_property_value; // Increase for next telemetry message.
+  ++telemetry_property_message_iteration_value; // Increase for next telemetry message.
 }
 
 static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span)
