@@ -134,7 +134,7 @@ static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* ou
  * C2D messaging. Enter a message in the Message Body and select Send Message. The Key and Value
  * will appear as a URL-encoded key-value pair appended to the topic: `%24.ct=application%2Fcbor`.
  *
- * NOTE: The Azure Portal only recongnizes printable character input and will NOT translate a JSON
+ * NOTE: The Azure Portal only recognizes printable character input and will NOT translate a JSON
  * formatted message into CBOR. Therefore, this sample only demonstrates how to parse the topic for
  * the content type system property. It is up to the service application to encode correctly
  * formatted CBOR (or other specified content type) and the device application to correctly decode
