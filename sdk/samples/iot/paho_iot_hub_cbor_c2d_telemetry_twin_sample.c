@@ -692,7 +692,7 @@ static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parse
       else
       {
         IOT_SAMPLE_LOG(
-            "Parsed desired property `%s`: %ld",
+            "Parsed desired property `%s`: %" PRIi64,
             twin_property_device_count_name,
             *out_parsed_device_count);
         result = true;
@@ -720,7 +720,7 @@ static void update_property_device_count(int64_t new_device_count)
   int64_t temp_value = twin_property_device_count_value;
   twin_property_device_count_value = new_device_count;
   IOT_SAMPLE_LOG_SUCCESS(
-      "Client twin updated `%s` locally from %ld to %ld.",
+      "Client twin updated `%s` locally from %" PRIi64 " to %" PRIi64 ".",
       twin_property_device_count_name,
       temp_value,
       twin_property_device_count_value);
@@ -758,7 +758,7 @@ static void build_cbor_reported_property(
   if (rc)
   {
     IOT_SAMPLE_LOG_ERROR(
-        "Failed to encode int '%ld': CborError %d.", twin_property_device_count_value, rc);
+        "Failed to encode int '%" PRIi64 "': CborError %d.", twin_property_device_count_value, rc);
     exit(rc);
   }
 
@@ -809,7 +809,7 @@ static void build_cbor_telemetry(
   if (rc)
   {
     IOT_SAMPLE_LOG_ERROR(
-        "Failed to encode int '%ld': CborError %d.",
+        "Failed to encode int '%" PRIi64 "': CborError %d.",
         telemetry_property_message_iteration_value,
         rc);
     exit(rc);
