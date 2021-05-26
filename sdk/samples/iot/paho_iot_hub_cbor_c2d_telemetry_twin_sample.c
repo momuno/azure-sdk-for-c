@@ -88,7 +88,7 @@ static void handle_device_twin_message(
     az_span message_span,
     az_iot_hub_client_twin_response* twin_response);
 static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parsed_device_count);
-static bool update_property_device_count(int64_t new_device_count);
+static void update_property_device_count(int64_t new_device_count);
 static void build_cbor_reported_property(
     uint8_t* reported_property_payload,
     size_t reported_property_payload_size,
@@ -102,8 +102,8 @@ static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* ou
 /*
  * This sample utilizes the Azure IoT Hub to get the device twin document, send a reported
  * property message, and receive desired property messages all in CBOR data format. It also shows
- * how to set the content type system property for C2D and telemetry messaging. After 10 attempts to
- * receive a C2D or desired property message, the sample will exit.
+ * how to set the content type system property for C2D and telemetry messaging. After 20 attempts to
+ * receive a message, the sample will exit.
  *
  * To run this sample, Intel's MIT licensed TinyCBOR library must be installed. The Embedded C SDK
  * is not dependent on any particular CBOR library. X509 self-certification is used.
@@ -292,10 +292,9 @@ static void send_and_receive_messages(void)
 {
   // Get the latest twin document from the IoT Hub.
   request_twin_document();
-  receive_message();
 
-  // Wait for reported property response, a desired property PATCH message, or C2D message.
-  // Send Telemetry.
+  // Wait for a GET request response, a reported property PATCH response, a desired property PATCH
+  // message, or a C2D message. Send Telemetry.
   for (uint8_t message_count = 0; message_count < MAX_MESSAGE_COUNT; message_count++)
   {
     receive_message();
@@ -613,8 +612,8 @@ static void handle_device_twin_message(
         if (parse_cbor_desired_property(message_span, &desired_property_device_count))
         {
           update_property_device_count(desired_property_device_count);
-          send_reported_property();
         }
+        send_reported_property();
       }
       break;
 
