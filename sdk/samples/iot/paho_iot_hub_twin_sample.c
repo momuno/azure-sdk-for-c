@@ -53,7 +53,6 @@ static void subscribe_mqtt_client_to_iot_hub_topics(void);
 static void send_and_receive_device_twin_messages(void);
 static void disconnect_mqtt_client_from_iot_hub(void);
 
-static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span);
 static void request_twin_document(void);
 static void send_reported_property(void);
 static bool receive_device_twin_message(void);
@@ -72,6 +71,7 @@ static void update_property_device_count(int32_t device_count);
 static void build_reported_property(
     az_span reported_property_payload,
     az_span* out_reported_property_payload);
+static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span);
 
 /*
  * This sample utilizes the Azure IoT Hub to get the device twin document, send a reported property
