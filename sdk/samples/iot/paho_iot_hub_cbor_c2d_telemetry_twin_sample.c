@@ -294,13 +294,8 @@ static void send_and_receive_messages(void)
   request_twin_document();
   receive_message();
 
-  // Update the IoT Hub with device's current properties.
-  send_reported_property();
-  receive_message();
-
-  send_telemetry();
-
-  // Wait for desired property PATCH messages or C2D messages. Send Telemetry.
+  // Wait for reported property response, a desired property PATCH message, or C2D message.
+  // Send Telemetry.
   for (uint8_t message_count = 0; message_count < MAX_MESSAGE_COUNT; message_count++)
   {
     receive_message();
@@ -615,16 +610,10 @@ static void handle_device_twin_message(
 
       if (twin_response->status == AZ_IOT_STATUS_OK)
       {
-        // Parse for the `device_count` property and if parsed, update locally.
         if (parse_cbor_desired_property(message_span, &desired_property_device_count))
         {
-          int64_t temp_value = twin_property_device_count_value;
-          twin_property_device_count_value = desired_property_device_count;
-          IOT_SAMPLE_LOG_SUCCESS(
-              "Client twin updated `%s` locally from %ld to %ld.",
-              twin_property_device_count_name,
-              temp_value,
-              twin_property_device_count_value);
+          update_property_device_count(desired_property_device_count);
+          send_reported_property();
         }
       }
       break;
@@ -639,16 +628,10 @@ static void handle_device_twin_message(
       IOT_SAMPLE_LOG("Message Type: Desired Properties PATCH request");
       IOT_SAMPLE_LOG_HEX("Payload:", az_span_size(message_span), az_span_ptr(message_span));
 
-      // Parse for the `device_count` property.
       if (parse_cbor_desired_property(message_span, &desired_property_device_count))
       {
-        // If the `device_count` property differs from device, update locally and send a reported
-        // property message to the IoT Hub.
-        if (update_property_device_count(desired_property_device_count))
-        {
-          send_reported_property();
-          receive_message();
-        }
+        update_property_device_count(desired_property_device_count);
+        send_reported_property();
       }
       break;
   }
@@ -733,31 +716,15 @@ static bool parse_cbor_desired_property(az_span message_span, int64_t* out_parse
   return result;
 }
 
-static bool update_property_device_count(int64_t new_device_count)
+static void update_property_device_count(int64_t new_device_count)
 {
-  bool result;
-
-  if (twin_property_device_count_value != new_device_count)
-  {
-    int64_t temp_value = twin_property_device_count_value;
-    twin_property_device_count_value = new_device_count;
-    IOT_SAMPLE_LOG_SUCCESS(
-        "Client twin updated `%s` locally from %ld to %ld.",
-        twin_property_device_count_name,
-        temp_value,
-        twin_property_device_count_value);
-    result = true;
-  }
-  else
-  {
-    IOT_SAMPLE_LOG_SUCCESS(
-        "Client twin update not required. `%s` locally remains %ld.",
-        twin_property_device_count_name,
-        twin_property_device_count_value);
-    result = false;
-  }
-
-  return result;
+  int64_t temp_value = twin_property_device_count_value;
+  twin_property_device_count_value = new_device_count;
+  IOT_SAMPLE_LOG_SUCCESS(
+      "Client twin updated `%s` locally from %ld to %ld.",
+      twin_property_device_count_name,
+      temp_value,
+      twin_property_device_count_value);
 }
 
 static void build_cbor_reported_property(
