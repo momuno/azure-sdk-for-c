@@ -38,6 +38,7 @@ static az_span const reported_property_rid_base = AZ_SPAN_LITERAL_FROM_STR("rp-"
 static uint64_t reported_property_rid_num = 0;
 
 static az_span const twin_version_name = AZ_SPAN_LITERAL_FROM_STR("$version");
+static az_span const twin_desired_name = AZ_SPAN_LITERAL_FROM_STR("desired");
 static az_span const twin_property_device_count_name = AZ_SPAN_LITERAL_FROM_STR("device_count");
 static int32_t twin_property_device_count_value = 0;
 
@@ -56,9 +57,7 @@ static void disconnect_mqtt_client_from_iot_hub(void);
 static void request_twin_document(void);
 static void send_reported_property(void);
 static void receive_device_twin_message(void);
-static void handle_device_twin_message(
-    az_span message_span,
-    az_iot_hub_client_twin_response* twin_response);
+static void handle_device_twin_message(char* topic, int topic_len, MQTTClient_message const* message);
 static bool parse_desired_property(
     az_span message_span,
     int32_t* out_parsed_device_count);
@@ -331,7 +330,7 @@ static void send_reported_property(void)
   // Publish the reported property PATCH message.
   rc = MQTTClient_publish(
       mqtt_client,
-      twin_patch_topic_buffer,
+      reported_property_patch_topic_buffer,
       az_span_size(reported_property_payload),
       az_span_ptr(reported_property_payload),
       IOT_SAMPLE_MQTT_PUBLISH_QOS,
@@ -352,7 +351,6 @@ static void receive_device_twin_message(void)
   char* topic = NULL;
   int topic_len = 0;
   MQTTClient_message* message = NULL;
-  bool message_received = true;
 
   IOT_SAMPLE_LOG(" "); // Formatting
 
@@ -406,7 +404,7 @@ static void handle_device_twin_message(char* topic, int topic_len, MQTTClient_me
   IOT_SAMPLE_LOG_AZ_SPAN("Topic:", topic_span);
 
   // Invoke appropriate action per response type (3 types only).
-  switch (twin_response->response_type)
+  switch (twin_response.response_type)
   {
     case AZ_IOT_HUB_CLIENT_TWIN_RESPONSE_TYPE_GET:
       IOT_SAMPLE_LOG("Message Type: GET response");
@@ -433,9 +431,9 @@ static void handle_device_twin_message(char* topic, int topic_len, MQTTClient_me
       IOT_SAMPLE_LOG("Message Type: Desired Properties PATCH request");
       IOT_SAMPLE_LOG_AZ_SPAN("Payload:", message_span);
 
-      if (parse_desired_device_count_property(message_span, &desired_property_device_count))
+      if (parse_desired_property(message_span, &desired_property_device_count))
       {
-        update_property_device_count(desired_device_count);
+        update_property_device_count(desired_property_device_count);
         send_reported_property();
       }
       break;
@@ -456,7 +454,22 @@ static bool parse_desired_property(az_span message_span, int32_t* out_parsed_dev
   IOT_SAMPLE_EXIT_IF_AZ_FAILED(az_json_reader_next_token(&jr), log, property);
   if (jr.token.kind == AZ_JSON_TOKEN_BEGIN_OBJECT)
   {
+    // If full twin document, move to desired section.
     IOT_SAMPLE_EXIT_IF_AZ_FAILED(az_json_reader_next_token(&jr), log, property);
+    if (az_json_token_is_text_equal(&jr.token, twin_desired_name))
+    {
+      IOT_SAMPLE_EXIT_IF_AZ_FAILED(az_json_reader_next_token(&jr), log, property);
+      if (jr.token.kind == AZ_JSON_TOKEN_BEGIN_OBJECT)
+      {
+        IOT_SAMPLE_EXIT_IF_AZ_FAILED(az_json_reader_next_token(&jr), log, property);
+      }
+      else
+      {
+        IOT_SAMPLE_LOG_AZ_SPAN(log, property);
+        return property_found;
+      }
+    }
+
     while (!property_found && (jr.token.kind != AZ_JSON_TOKEN_END_OBJECT))
     {
       if (az_json_token_is_text_equal(&jr.token, twin_property_device_count_name))
