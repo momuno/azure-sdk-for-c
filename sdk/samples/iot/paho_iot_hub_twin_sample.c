@@ -257,7 +257,7 @@ static void request_twin_document(void)
   generate_rid_span(twin_get_rid_base, twin_get_rid_num, &twin_get_rid_span);
   ++twin_get_rid_num; // Increment to keep uniqueness.
 
-  // Get the Twin Document topic to publish the twin document request.
+  // Get the twin document GET topic to publish the twin document request.
   char twin_get_topic_buffer[STANDARD_BUFFER_SIZE];
   size_t twin_get_topic_length;
   rc = az_iot_hub_client_twin_document_get_publish_topic(
@@ -269,7 +269,7 @@ static void request_twin_document(void)
   if (az_result_failed(rc))
   {
     IOT_SAMPLE_LOG_ERROR(
-        "Failed to get the Twin Document topic: az_result return code 0x%08x.", rc);
+        "Failed to get the twin document GET topic: az_result return code 0x%08x.", rc);
     exit(rc);
   }
   IOT_SAMPLE_LOG("Topic: %.*s", (int)twin_get_topic_length, twin_get_topic_buffer);
@@ -339,7 +339,7 @@ static void send_reported_property(void)
   if (rc != MQTTCLIENT_SUCCESS)
   {
     IOT_SAMPLE_LOG_ERROR(
-        "Failed to publish the Twin Patch reported property update: MQTTClient return code %d.",
+        "Failed to publish the twin reported property PATCH message: MQTTClient return code %d.",
         rc);
     exit(rc);
   }
