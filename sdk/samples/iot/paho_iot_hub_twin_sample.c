@@ -32,13 +32,13 @@
 #define MQTT_TIMEOUT_RECEIVE_MS (60 * 1000)
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
-static az_span const twin_get_rid_base = AZ_SPAN_LITERAL_FROM_STR("tg-");
-static uint64_t twin_get_rid_num = 0;
-static az_span const reported_property_rid_base = AZ_SPAN_LITERAL_FROM_STR("rp-");
-static uint64_t reported_property_rid_num = 0;
+static az_span const twin_get_rid_base = AZ_SPAN_LITERAL_FROM_STR("get-");
+static int64_t twin_get_rid_num = 0;
+static az_span const twin_patch_reported_rid_base = AZ_SPAN_LITERAL_FROM_STR("patch_reported-");
+static int64_t twin_patch_reported_rid_num = 0;
 
-static az_span const twin_version_name = AZ_SPAN_LITERAL_FROM_STR("$version");
 static az_span const twin_desired_name = AZ_SPAN_LITERAL_FROM_STR("desired");
+static az_span const twin_version_name = AZ_SPAN_LITERAL_FROM_STR("$version");
 static az_span const twin_property_device_count_name = AZ_SPAN_LITERAL_FROM_STR("device_count");
 static int32_t twin_property_device_count_value = 0;
 
@@ -65,7 +65,7 @@ static void update_property_device_count(int32_t new_device_count);
 static void build_reported_property(
     az_span reported_property_payload,
     az_span* out_reported_property_payload);
-static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span);
+static void generate_rid_span(az_span base_span, int64_t unique_id, az_span* out_rid_span);
 
 /*
  * This sample utilizes the Azure IoT Hub to get the device twin document, send a reported property
@@ -229,6 +229,7 @@ static void send_and_receive_device_twin_messages(void)
   {
     receive_device_twin_message();
   }
+  IOT_SAMPLE_LOG(" "); // Formatting
 }
 
 static void disconnect_mqtt_client_from_iot_hub(void)
@@ -294,22 +295,22 @@ static void send_reported_property(void)
   IOT_SAMPLE_LOG("Client sending reported property to service.");
 
   // Generate the unique rid for request.
-  uint8_t reported_property_rid_buffer[RID_BUFFER_SIZE];
-  az_span reported_property_rid_span
-      = az_span_create(reported_property_rid_buffer, (int32_t)sizeof(reported_property_rid_buffer));
+  uint8_t twin_patch_reported_rid_buffer[RID_BUFFER_SIZE];
+  az_span twin_patch_reported_rid_span
+      = az_span_create(twin_patch_reported_rid_buffer, (int32_t)sizeof(twin_patch_reported_rid_buffer));
   generate_rid_span(
-      reported_property_rid_base, reported_property_rid_num, &reported_property_rid_span);
-  ++reported_property_rid_num; // Increment to keep uniqueness.
+      twin_patch_reported_rid_base, twin_patch_reported_rid_num, &twin_patch_reported_rid_span);
+  ++twin_patch_reported_rid_num; // Increment to keep uniqueness.
 
   // Get the twin reported property PATCH topic to publish a reported property message.
-  char reported_property_patch_topic_buffer[STANDARD_BUFFER_SIZE];
-  size_t reported_property_patch_topic_length;
+  char twin_patch_reported_topic_buffer[STANDARD_BUFFER_SIZE];
+  size_t twin_patch_reported_topic_length;
   rc = az_iot_hub_client_twin_patch_get_publish_topic(
       &hub_client,
-      reported_property_rid_span,
-      reported_property_patch_topic_buffer,
-      sizeof(reported_property_patch_topic_buffer),
-      &reported_property_patch_topic_length);
+      twin_patch_reported_rid_span,
+      twin_patch_reported_topic_buffer,
+      sizeof(twin_patch_reported_topic_buffer),
+      &twin_patch_reported_topic_length);
   if (az_result_failed(rc))
   {
     IOT_SAMPLE_LOG_ERROR(
@@ -318,8 +319,8 @@ static void send_reported_property(void)
   }
   IOT_SAMPLE_LOG(
       "Topic: %.*s",
-      (int)reported_property_patch_topic_length,
-      reported_property_patch_topic_buffer);
+      (int)twin_patch_reported_topic_length,
+      twin_patch_reported_topic_buffer);
 
   // Build the reported property message.
   char reported_property_payload_buffer[STANDARD_BUFFER_SIZE];
@@ -330,7 +331,7 @@ static void send_reported_property(void)
   // Publish the reported property PATCH message.
   rc = MQTTClient_publish(
       mqtt_client,
-      reported_property_patch_topic_buffer,
+      twin_patch_reported_topic_buffer,
       az_span_size(reported_property_payload),
       az_span_ptr(reported_property_payload),
       IOT_SAMPLE_MQTT_PUBLISH_QOS,
@@ -409,6 +410,7 @@ static void handle_device_twin_message(char* topic, int topic_len, MQTTClient_me
     case AZ_IOT_HUB_CLIENT_TWIN_RESPONSE_TYPE_GET:
       IOT_SAMPLE_LOG("Message Type: GET response");
       IOT_SAMPLE_LOG("Status: %d", twin_response.status);
+      IOT_SAMPLE_LOG_AZ_SPAN("Request ID:", twin_response.request_id);
       IOT_SAMPLE_LOG_AZ_SPAN("Payload:", message_span);
 
       if (twin_response.status == AZ_IOT_STATUS_OK)
@@ -424,11 +426,15 @@ static void handle_device_twin_message(char* topic, int topic_len, MQTTClient_me
     case AZ_IOT_HUB_CLIENT_TWIN_RESPONSE_TYPE_REPORTED_PROPERTIES:
       IOT_SAMPLE_LOG("Message Type: Reported Properties PATCH response");
       IOT_SAMPLE_LOG("Status: %d", twin_response.status);
+      IOT_SAMPLE_LOG_AZ_SPAN("Request ID:", twin_response.request_id);
+      IOT_SAMPLE_LOG_AZ_SPAN("Version:", twin_response.version);
       break;
 
     case AZ_IOT_HUB_CLIENT_TWIN_RESPONSE_TYPE_DESIRED_PROPERTIES:
       // This is acutally a request from the service, and we do not send back a response.
       IOT_SAMPLE_LOG("Message Type: Desired Properties PATCH request");
+      IOT_SAMPLE_LOG_AZ_SPAN("Request ID:", twin_response.request_id);
+      IOT_SAMPLE_LOG_AZ_SPAN("Version:", twin_response.version);
       IOT_SAMPLE_LOG_AZ_SPAN("Payload:", message_span);
 
       if (parse_desired_property(message_span, &desired_property_device_count))
@@ -540,7 +546,7 @@ static void build_reported_property(
   *out_reported_property_payload = az_json_writer_get_bytes_used_in_destination(&jw);
 }
 
-static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* out_rid_span)
+static void generate_rid_span(az_span base_span, int64_t unique_id, az_span* out_rid_span)
 {
   az_result rc;
   az_span remainder;
@@ -554,7 +560,7 @@ static void generate_rid_span(az_span base_span, uint64_t unique_id, az_span* ou
 
   remainder = az_span_copy(*out_rid_span, base_span);
 
-  rc = az_span_u64toa(remainder, unique_id, &remainder); // Performs size check internally.
+  rc = az_span_i64toa(remainder, unique_id, &remainder); // Performs size check internally.
   if (az_result_failed(rc))
   {
     IOT_SAMPLE_LOG_ERROR("Failed to convert uint64_t to ASCII: az_result return code 0x%08x.", rc);
